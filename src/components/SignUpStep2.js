@@ -1,33 +1,36 @@
 // src/components/SignUpStep2.js
-import React, { useState, useContext } from 'react';
-import { useHistory } from 'react-router-dom';
-import { SignUpContext } from '../context/SignUpContext';
-import axios from 'axios';
+import React, { useState, useContext } from "react";
+import { useHistory } from "react-router-dom";
+import { SignUpContext } from "../context/SignUpContext";
+import axios from "axios";
 
 const SignUpStep2 = () => {
   const { state, dispatch } = useContext(SignUpContext);
-  const [otp, setOtp] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const history = useHistory();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      alert("Passwords do not match");
       return;
     }
     try {
-      const response = await axios.post('/api/verify-otp', { email: state.email, otp });
+      const response = await axios.post("/api/verify-otp", {
+        email: state.email,
+        otp,
+      });
       if (response.data.success) {
-        dispatch({ type: 'SET_STEP2_DATA', payload: { password } });
-        history.push('/signup-step3');
+        dispatch({ type: "SET_STEP2_DATA", payload: { password } });
+        history.push("/signup-step3");
       } else {
-        alert('Invalid OTP');
+        alert("Invalid OTP");
       }
     } catch (error) {
       console.error(error);
-      alert('Error verifying OTP');
+      alert("Error verifying OTP");
     }
   };
 
