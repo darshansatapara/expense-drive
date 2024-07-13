@@ -1,38 +1,55 @@
-// src/context/SignUpContext.js
-import React, { createContext, useReducer } from 'react';
+// src/context/SignupContext.js
+
+import React, { createContext, useReducer, useContext } from "react";
+
+const SignupContext = createContext();
 
 const initialState = {
-  username: '',
-  email: '',
-  phone: '',
-  password: '',
-  profilePic: '',
-  birthDate: '',
-  gender: '',
-  profession: '',
+  profilePicture: null,
+  username: "",
+  fullName: "",
+  email: "",
+  mobileNumber: "",
+  dateOfBirth: "",
+  gender: "",
+  profession: "",
+  password: "",
+  confirmPassword: "",
+  otp: "",
+  isOtpSent: false,
+  isOtpVerified: false,
+  formErrors: {},
 };
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case 'SET_STEP1_DATA':
-      return { ...state, ...action.payload };
-    case 'SET_STEP2_DATA':
-      return { ...state, password: action.payload.password };
-    case 'SET_STEP3_DATA':
-      return { ...state, ...action.payload };
+    case "SET_FORM_DATA":
+      return { ...state, [action.field]: action.payload };
+    case "SET_OTP_SENT":
+      return { ...state, isOtpSent: action.payload };
+    case "SET_OTP_VERIFIED":
+      return { ...state, isOtpVerified: action.payload };
+    case "SET_FORM_ERRORS":
+      return { ...state, formErrors: action.payload };
+    case "CLEAR_FORM":
+      return initialState;
     default:
       return state;
   }
 };
 
-export const SignUpContext = createContext();
-
-export const SignUpProvider = ({ children }) => {
+const SignupProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   return (
-    <SignUpContext.Provider value={{ state, dispatch }}>
+    <SignupContext.Provider value={{ state, dispatch }}>
       {children}
-    </SignUpContext.Provider>
+    </SignupContext.Provider>
   );
 };
+
+const useSignup = () => {
+  return useContext(SignupContext);
+};
+
+export { SignupProvider, useSignup };
