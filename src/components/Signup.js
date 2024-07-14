@@ -99,7 +99,10 @@ const Signup = () => {
 
   return (
     <div className="signup-container">
-      <div className="logo">Money Expance</div>
+      <div className="logo">
+        M<span style={{ color: "black" }}>oney</span> E
+        <span style={{ color: "black" }}>xpense</span>
+      </div>
       {state.profilePicture && (
         <div className="profile-preview">
           <img src={URL.createObjectURL(state.profilePicture)} alt="Profile" />
@@ -160,9 +163,10 @@ const Signup = () => {
             </button>
           </div>
         )}
-        <div>
+        <div className="mobile-input">
           <label>Mobile Number</label>
           <PhoneInput
+            className="PhoneInput"
             country={"us"}
             value={state.mobileNumber}
             onChange={handleMobileChange}
@@ -181,33 +185,21 @@ const Signup = () => {
         </div>
         <div>
           <label>Gender</label>
-          <div className="gender-radio">
-            <input
-              type="radio"
-              name="gender"
-              value="male"
-              onChange={handleChange}
-              required
-            />{" "}
-            Male
-            <input
-              type="radio"
-              name="gender"
-              value="female"
-              onChange={handleChange}
-              required
-            />{" "}
-            Female
-            <input
-              type="radio"
-              name="gender"
-              value="other"
-              onChange={handleChange}
-              required
-            />{" "}
-            Other
-          </div>
+          <select
+            className="gender-dropdown"
+            name="gender"
+            onChange={handleChange}
+            required
+          >
+            <option value="" disabled selected>
+              Select your gender
+            </option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
         </div>
+
         <div>
           <label>Profession</label>
           <select
@@ -246,24 +238,19 @@ const Signup = () => {
             onChange={handleChange}
             required
           />
-
           <div className="verify-otp">
+            <button
+              type="button"
+              onClick={handleSendOtp}
+              disabled={state.isOtpSent}
+            >
+              Send OTP
+            </button>
             <div className="otp-input">
               <input type="number" placeholder="Enter OTP" />
-            </div>
-            <div className="otp-actions">
-              <button
-                type="button"
-                onClick={handleSendOtp}
-                disabled={state.isOtpSent}
-              >
-                {state.isOtpSent ? "Verify OTP" : "Send OTP"}
+              <button type="button" onClick={handleVerifyOtp}>
+                Verify
               </button>
-              {state.isOtpSent && (
-                <button type="button" onClick={handleVerifyOtp}>
-                  Verify
-                </button>
-              )}
             </div>
           </div>
 
