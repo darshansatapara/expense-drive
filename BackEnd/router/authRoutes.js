@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const http = require("http");
 const nodemailer = require("nodemailer");
 const keys = require("../config/keys");
 
@@ -19,6 +20,8 @@ router.post("/send-otp", (req, res) => {
   // Send OTP via email
   const transporter = nodemailer.createTransport({
     service: "gmail",
+    secure: true,
+    port: 465,
     auth: {
       user: keys.email.user,
       pass: keys.email.pass,
@@ -26,11 +29,12 @@ router.post("/send-otp", (req, res) => {
   });
 
   const mailOptions = {
-    from: keys.email.user,
+    from: keys.email.email2,
     to: email,
     subject: "OTP for Verification",
     text: `Your OTP for registration is ${otp}. It is valid for 2 minutes.`,
   };
+  console.log(mailOptions);
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {

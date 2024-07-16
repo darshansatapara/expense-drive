@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const keys = require("../config/keys");
 
-const mongoURI =keys.mongoURI
+const mongoURI = keys.mongoURI;
 
 const connectToMongo = async () => {
   try {
