@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from "react";
+// src/SignupPage.js
+
+import React from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import axios from "axios";
-import Cropper from "react-easy-crop";
 import { SignupProvider, useSignup } from "../context/SignUpContext";
 import "../css/SignupPage.css";
-import { getCroppedImg } from "../utils/cropImageUtils";
 
 const validatePassword = (password) => {
   const passwordRegex =
@@ -15,30 +15,14 @@ const validatePassword = (password) => {
 
 const Signup = () => {
   const { state, dispatch } = useSignup();
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedArea, setCroppedArea] = useState(null);
-  const [croppedImage, setCroppedImage] = useState(null);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "profilePicture" && files && files.length > 0) {
-      const reader = new FileReader();
-      reader.readAsDataURL(files[0]);
-      reader.onload = () => {
-        dispatch({
-          type: "SET_FORM_DATA",
-          field: name,
-          payload: reader.result,
-        });
-      };
-    } else {
-      dispatch({
-        type: "SET_FORM_DATA",
-        field: name,
-        payload: value,
-      });
-    }
+    dispatch({
+      type: "SET_FORM_DATA",
+      field: name,
+      payload: files ? files[0] : value,
+    });
   };
 
   const handleMobileChange = (value) => {
@@ -91,14 +75,6 @@ const Signup = () => {
 
     if (Object.keys(formErrors).length === 0 && state.isOtpVerified) {
       try {
-        let croppedProfilePicture = null;
-        if (state.profilePicture) {
-          croppedProfilePicture = await getCroppedImg(
-            state.profilePicture,
-            croppedArea
-          );
-        }
-
         const formData = new FormData();
         for (const key in state) {
           if (
@@ -111,10 +87,6 @@ const Signup = () => {
           }
         }
 
-        if (croppedProfilePicture) {
-          formData.append("profilePicture", croppedProfilePicture);
-        }
-
         const response = await axios.post("/api/signup", formData);
         if (response.data.success) {
           console.log("Signup successful");
@@ -125,20 +97,19 @@ const Signup = () => {
     }
   };
 
-  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
-    setCroppedArea(croppedAreaPixels);
-  }, []);
-
   return (
     <div className="signup-container">
-      <div className="logo">Money Expance</div>
+      <div className="logo">
+        M<span style={{ color: "black" }}>oney</span> E
+        <span style={{ color: "black" }}>xpense</span>
+      </div>
       {state.profilePicture && (
         <div className="profile-preview">
-          <img src={state.profilePicture} alt="Profile" />
+          <img src={URL.createObjectURL(state.profilePicture)} alt="Profile" />
         </div>
       )}
       <form className="signup-form" onSubmit={handleSubmit}>
-        <div className="input-group">
+        <div>
           <label>Profile Picture</label>
           <input
             type="file"
@@ -146,19 +117,8 @@ const Signup = () => {
             accept="image/*"
             onChange={handleChange}
           />
-          {state.profilePicture && (
-            <Cropper
-              image={state.profilePicture}
-              crop={crop}
-              zoom={zoom}
-              aspect={1}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={onCropComplete}
-            />
-          )}
         </div>
-        <div className="input-group">
+        <div>
           <label>Username</label>
           <input
             type="text"
@@ -168,7 +128,7 @@ const Signup = () => {
             required
           />
         </div>
-        <div className="input-group">
+        <div>
           <label>Full Name</label>
           <input
             type="text"
@@ -178,7 +138,7 @@ const Signup = () => {
             required
           />
         </div>
-        <div className="input-group">
+        <div>
           <label>Email</label>
           <input
             type="email"
@@ -189,14 +149,13 @@ const Signup = () => {
           />
         </div>
         {state.isOtpSent && (
-          <div className="input-group otp-group">
+          <div>
             <label>Enter OTP</label>
             <input
               type="text"
               name="otp"
               value={state.otp}
               onChange={handleChange}
-              maxLength="6"
               required
             />
             <button type="button" onClick={handleVerifyOtp}>
@@ -204,21 +163,17 @@ const Signup = () => {
             </button>
           </div>
         )}
-        {!state.isOtpSent && (
-          <button type="button" onClick={handleSendOtp}>
-            Send OTP
-          </button>
-        )}
-        <div className="input-group">
+        <div className="mobile-input">
           <label>Mobile Number</label>
           <PhoneInput
-            country={"in"}
+            className="PhoneInput"
+            country={"us"}
             value={state.mobileNumber}
             onChange={handleMobileChange}
             required
           />
         </div>
-        <div className="input-group">
+        <div>
           <label>Date of Birth</label>
           <input
             type="date"
@@ -226,55 +181,42 @@ const Signup = () => {
             value={state.dateOfBirth}
             onChange={handleChange}
             required
-            className="stylish-date-input"
           />
         </div>
-        <div className="input-group">
+        <div>
           <label>Gender</label>
-          <div className="gender-radio">
-            <label>
-              <input
-                type="radio"
-                name="gender"
-                value="male"
-                onChange={handleChange}
-                required
-              />{" "}
-              Male
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="gender"
-                value="female"
-                onChange={handleChange}
-                required
-              />{" "}
-              Female
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="gender"
-                value="other"
-                onChange={handleChange}
-                required
-              />{" "}
-              Other
-            </label>
-          </div>
+          <select
+            className="gender-dropdown"
+            name="gender"
+            onChange={handleChange}
+            required
+          >
+            <option value="" disabled selected>
+              Select your gender
+            </option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
         </div>
-        <div className="input-group">
+
+        <div>
           <label>Profession</label>
-          <input
-            type="text"
+          <select
             name="profession"
             value={state.profession}
             onChange={handleChange}
             required
-          />
+          >
+            <option value="">Select Profession</option>
+            <option value="student">Student</option>
+            <option value="developer">Developer</option>
+            <option value="designer">Designer</option>
+            <option value="manager">Manager</option>
+            <option value="other">Other</option>
+          </select>
         </div>
-        <div className="input-group">
+        <div>
           <label>Password</label>
           <input
             type="password"
@@ -287,7 +229,7 @@ const Signup = () => {
             <p className="error">{state.formErrors.password}</p>
           )}
         </div>
-        <div className="input-group">
+        <div>
           <label>Confirm Password</label>
           <input
             type="password"
@@ -296,6 +238,22 @@ const Signup = () => {
             onChange={handleChange}
             required
           />
+          <div className="verify-otp">
+            <button
+              type="button"
+              onClick={handleSendOtp}
+              disabled={state.isOtpSent}
+            >
+              Send OTP
+            </button>
+            <div className="otp-input">
+              <input type="number" placeholder="Enter OTP" />
+              <button type="button" onClick={handleVerifyOtp}>
+                Verify
+              </button>
+            </div>
+          </div>
+
           {state.formErrors.confirmPassword && (
             <p className="error">{state.formErrors.confirmPassword}</p>
           )}
