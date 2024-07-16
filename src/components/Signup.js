@@ -3,9 +3,9 @@
 import React from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import axios from "axios";
 import { SignupProvider, useSignup } from "../context/SignupContext";
 import "../css/SignupPage.css";
+import client from "../axios";
 
 const validatePassword = (password) => {
   const passwordRegex =
@@ -35,7 +35,7 @@ const Signup = () => {
 
   const handleSendOtp = async () => {
     try {
-      const response = await client.post("/api/send-otp", {
+      const response = await client.post("/api/auth/send-otp", {
         email: state.email,
       });
       if (response.data.success) {
@@ -48,7 +48,7 @@ const Signup = () => {
 
   const handleVerifyOtp = async () => {
     try {
-      const response = await client.post("/api/verify-otp", {
+      const response = await client.post("/api/auth/verify-otp", {
         email: state.email,
         otp: state.otp,
       });
@@ -87,7 +87,7 @@ const Signup = () => {
           }
         }
 
-        const response = await client.post("/api/signup", formData);
+        const response = await client.post("/api/auth/signup", formData);
         if (response.data.success) {
           console.log("Signup successful");
         }
