@@ -3,7 +3,7 @@
 import React from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import client from "../axios";
+import axios from "axios";
 import { SignupProvider, useSignup } from "../context/SignupContext";
 import "../css/SignupPage.css";
 
