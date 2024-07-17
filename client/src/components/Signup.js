@@ -30,10 +30,25 @@ const Signup = () => {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: files ? files[0] : value,
-    }));
+
+    if (name === "profilePicture" && files && files.length > 0) {
+      const file = files[0];
+      convertImageToBase64(file)
+        .then((base64Image) => {
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            profilePicture: base64Image,
+          }));
+        })
+        .catch((error) => {
+          console.error("Error converting image: ", error);
+        });
+    } else {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: value,
+      }));
+    }
   };
 
   const handleMobileChange = (value) => {
@@ -45,7 +60,6 @@ const Signup = () => {
 
   const handleSendOtp = async () => {
     try {
-      console.log("hello");
       const response = await client.post("/auth/send-otp", {
         email: formData.email,
       });
@@ -56,7 +70,6 @@ const Signup = () => {
         }));
       }
     } catch (error) {
-      console.log(formData.email);
       console.error("Failed to send OTP", error);
     }
   };
@@ -96,17 +109,10 @@ const Signup = () => {
 
     if (Object.keys(formErrors).length === 0 && formData.isOtpVerified) {
       try {
-        const formPayload = new FormData();
-        for (const key in formData) {
-          if (
-            formData[key] &&
-            key !== "formErrors" &&
-            key !== "isOtpSent" &&
-            key !== "isOtpVerified"
-          ) {
-            formPayload.append(key, formData[key]);
-          }
-        }
+        const formPayload = {
+          ...formData,
+          profilePicture: formData.profilePicture, // Already in base64 format
+        };
 
         const response = await client.post("/auth/signup", formPayload);
         if (response.data.success) {
@@ -118,6 +124,23 @@ const Signup = () => {
     }
   };
 
+  const convertImageToBase64 = (imageFile) => {
+    return new Promise((resolve, reject) => {
+      if (!imageFile || !(imageFile instanceof Blob)) {
+        reject("No valid image selected.");
+      }
+
+      const reader = new FileReader();
+      reader.readAsDataURL(imageFile);
+      reader.onload = () => {
+        resolve(reader.result.split(",")[1]);
+      };
+      reader.onerror = (error) => {
+        reject("Error converting image to base64: " + error);
+      };
+    });
+  };
+
   return (
     <div className="signup-container">
       <div className="logo">
@@ -127,7 +150,7 @@ const Signup = () => {
       {formData.profilePicture && (
         <div className="profile-preview">
           <img
-            src={URL.createObjectURL(formData.profilePicture)}
+            src={`data:image/jpeg;base64,${formData.profilePicture}`}
             alt="Profile"
             className="profile-image"
           />
@@ -191,7 +214,6 @@ const Signup = () => {
         <div className="mobile-input">
           <label>Mobile Number</label>
           <PhoneInput
-            className="PhoneInput"
             country={"us"}
             value={formData.mobileNumber}
             onChange={handleMobileChange}
@@ -263,27 +285,6 @@ const Signup = () => {
             onChange={handleChange}
             required
           />
-          <div className="verify-otp">
-            <button
-              type="button"
-              onClick={handleSendOtp}
-              disabled={formData.isOtpSent}
-            >
-              Send OTP
-            </button>
-            <div className="otp-input">
-              <input
-                type="number"
-                name="otp"
-                value={formData.otp}
-                placeholder="Enter OTP"
-                onChange={handleChange}
-              />
-              <button type="button" onClick={handleVerifyOtp}>
-                Verify
-              </button>
-            </div>
-          </div>
           {formData.formErrors.confirmPassword && (
             <p className="error">{formData.formErrors.confirmPassword}</p>
           )}
