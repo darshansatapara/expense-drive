@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const http = require("http");
 const nodemailer = require("nodemailer");
 const keys = require("../config/keys");
 
@@ -9,8 +8,8 @@ let otpStorage = {};
 
 // Send OTP to user's email
 router.post("/send-otp", (req, res) => {
+  console.log("here");
   const { email } = req.body;
-
   // Generate OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 

@@ -5,15 +5,9 @@ const mongoURI = keys.mongoURI;
 
 const connectToMongo = async () => {
   try {
-    // Enable connection pooling
-    const options = {
-      // Set socket and server selection timeouts
-      socketTimeoutMS: 30000, // 30 seconds
-      serverSelectionTimeoutMS: 30000, // 30 seconds
-    };
 
     mongoose
-      .connect(mongoURI, options)
+      .connect(mongoURI)
       .then(() => console.log("Connected to MongoDB!"))
       .catch((err) => console.error("Error connecting to MongoDB:", err));
 

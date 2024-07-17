@@ -1,14 +1,21 @@
-const express = require("express");
+const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/authRoutes');
+
 const app = express();
-const authRouter = require("./router/authRoutes");
-const connectToMongo = require("./db/db"); // Import the function to connect to MongoDB
+
+// Allow requests from http://localhost:3000
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
-app.use("/api/auth", authRouter);
 
-const port = process.env.PORT || 5001;
+app.use('/api/auth', authRoutes); // Ensure this matches the baseURL configuration
 
-// Connect to MongoDB when the server starts
-
-connectToMongo();
-app.listen(port, () => console.log(`Server running on port ${port}`));
+const PORT = 5000; // Your backend server port
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

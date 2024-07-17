@@ -1,9 +1,6 @@
-// src/SignupPage.js
-
-import React from "react";
+import React, { useState } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import { SignupProvider, useSignup } from "../context/SignupContext";
 import "../css/SignupPage.css";
 import client from "../axios";
 
@@ -14,46 +11,67 @@ const validatePassword = (password) => {
 };
 
 const Signup = () => {
-  const { state, dispatch } = useSignup();
+  const [formData, setFormData] = useState({
+    profilePicture: null,
+    username: "",
+    fullName: "",
+    email: "",
+    mobileNumber: "",
+    dateOfBirth: "",
+    gender: "",
+    profession: "",
+    password: "",
+    confirmPassword: "",
+    otp: "",
+    isOtpSent: false,
+    isOtpVerified: false,
+    formErrors: {},
+  });
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    dispatch({
-      type: "SET_FORM_DATA",
-      field: name,
-      payload: files ? files[0] : value,
-    });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: files ? files[0] : value,
+    }));
   };
 
   const handleMobileChange = (value) => {
-    dispatch({
-      type: "SET_FORM_DATA",
-      field: "mobileNumber",
-      payload: value,
-    });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      mobileNumber: value,
+    }));
   };
 
   const handleSendOtp = async () => {
     try {
-      const response = await client.post("/api/auth/send-otp", {
-        email: state.email,
+      console.log("hello");
+      const response = await client.post("/auth/send-otp", {
+        email: formData.email,
       });
       if (response.data.success) {
-        dispatch({ type: "SET_OTP_SENT", payload: true });
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          isOtpSent: true,
+        }));
       }
     } catch (error) {
+      console.log(formData.email);
       console.error("Failed to send OTP", error);
     }
   };
 
   const handleVerifyOtp = async () => {
     try {
-      const response = await client.post("/api/auth/verify-otp", {
-        email: state.email,
-        otp: state.otp,
+      const response = await client.post("/auth/verify-otp", {
+        email: formData.email,
+        otp: formData.otp,
       });
       if (response.data.success) {
-        dispatch({ type: "SET_OTP_VERIFIED", payload: true });
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          isOtpVerified: true,
+        }));
       }
     } catch (error) {
       console.error("Failed to verify OTP", error);
@@ -64,30 +82,33 @@ const Signup = () => {
     e.preventDefault();
 
     const formErrors = {};
-    if (!validatePassword(state.password)) {
+    if (!validatePassword(formData.password)) {
       formErrors.password =
         "Password must be at least 8 characters long, contain one uppercase letter, one lowercase letter, one number, and one special character.";
     }
-    if (state.password !== state.confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       formErrors.confirmPassword = "Passwords do not match.";
     }
-    dispatch({ type: "SET_FORM_ERRORS", payload: formErrors });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      formErrors,
+    }));
 
-    if (Object.keys(formErrors).length === 0 && state.isOtpVerified) {
+    if (Object.keys(formErrors).length === 0 && formData.isOtpVerified) {
       try {
-        const formData = new FormData();
-        for (const key in state) {
+        const formPayload = new FormData();
+        for (const key in formData) {
           if (
-            state[key] &&
+            formData[key] &&
             key !== "formErrors" &&
             key !== "isOtpSent" &&
             key !== "isOtpVerified"
           ) {
-            formData.append(key, state[key]);
+            formPayload.append(key, formData[key]);
           }
         }
 
-        const response = await client.post("/api/auth/signup", formData);
+        const response = await client.post("/auth/signup", formPayload);
         if (response.data.success) {
           console.log("Signup successful");
         }
@@ -103,10 +124,10 @@ const Signup = () => {
         M<span style={{ color: "black" }}>oney</span> E
         <span style={{ color: "black" }}>xpense</span>
       </div>
-      {state.profilePicture && (
+      {formData.profilePicture && (
         <div className="profile-preview">
           <img
-            src={URL.createObjectURL(state.profilePicture)}
+            src={URL.createObjectURL(formData.profilePicture)}
             alt="Profile"
             className="profile-image"
           />
@@ -127,7 +148,7 @@ const Signup = () => {
           <input
             type="text"
             name="username"
-            value={state.username}
+            value={formData.username}
             onChange={handleChange}
             required
           />
@@ -137,7 +158,7 @@ const Signup = () => {
           <input
             type="text"
             name="fullName"
-            value={state.fullName}
+            value={formData.fullName}
             onChange={handleChange}
             required
           />
@@ -147,18 +168,18 @@ const Signup = () => {
           <input
             type="email"
             name="email"
-            value={state.email}
+            value={formData.email}
             onChange={handleChange}
             required
           />
         </div>
-        {state.isOtpSent && (
+        {formData.isOtpSent && (
           <div>
             <label>Enter OTP</label>
             <input
               type="text"
               name="otp"
-              value={state.otp}
+              value={formData.otp}
               onChange={handleChange}
               required
             />
@@ -172,7 +193,7 @@ const Signup = () => {
           <PhoneInput
             className="PhoneInput"
             country={"us"}
-            value={state.mobileNumber}
+            value={formData.mobileNumber}
             onChange={handleMobileChange}
             required
           />
@@ -182,7 +203,7 @@ const Signup = () => {
           <input
             type="date"
             name="dateOfBirth"
-            value={state.dateOfBirth}
+            value={formData.dateOfBirth}
             onChange={handleChange}
             required
           />
@@ -192,10 +213,11 @@ const Signup = () => {
           <select
             className="gender-dropdown"
             name="gender"
+            value={formData.gender}
             onChange={handleChange}
             required
           >
-            <option value="" disabled selected>
+            <option value="" disabled>
               Select your gender
             </option>
             <option value="male">Male</option>
@@ -203,12 +225,11 @@ const Signup = () => {
             <option value="other">Other</option>
           </select>
         </div>
-
         <div>
           <label>Profession</label>
           <select
             name="profession"
-            value={state.profession}
+            value={formData.profession}
             onChange={handleChange}
             required
           >
@@ -225,12 +246,12 @@ const Signup = () => {
           <input
             type="password"
             name="password"
-            value={state.password}
+            value={formData.password}
             onChange={handleChange}
             required
           />
-          {state.formErrors.password && (
-            <p className="error">{state.formErrors.password}</p>
+          {formData.formErrors.password && (
+            <p className="error">{formData.formErrors.password}</p>
           )}
         </div>
         <div>
@@ -238,7 +259,7 @@ const Signup = () => {
           <input
             type="password"
             name="confirmPassword"
-            value={state.confirmPassword}
+            value={formData.confirmPassword}
             onChange={handleChange}
             required
           />
@@ -246,26 +267,51 @@ const Signup = () => {
             <button
               type="button"
               onClick={handleSendOtp}
-              disabled={state.isOtpSent}
+              disabled={formData.isOtpSent}
             >
               Send OTP
             </button>
             <div className="otp-input">
-              <input type="number" placeholder="Enter OTP" />
+              <input
+                type="number"
+                name="otp"
+                value={formData.otp}
+                placeholder="Enter OTP"
+                onChange={handleChange}
+              />
               <button type="button" onClick={handleVerifyOtp}>
                 Verify
               </button>
             </div>
           </div>
-
-          {state.formErrors.confirmPassword && (
-            <p className="error">{state.formErrors.confirmPassword}</p>
+          {formData.formErrors.confirmPassword && (
+            <p className="error">{formData.formErrors.confirmPassword}</p>
           )}
         </div>
-        <button type="submit" disabled={!state.isOtpVerified}>
+        <button type="submit" disabled={!formData.isOtpVerified}>
           Sign Up
         </button>
-        <button type="button" onClick={() => dispatch({ type: "CLEAR_FORM" })}>
+        <button
+          type="button"
+          onClick={() =>
+            setFormData({
+              profilePicture: null,
+              username: "",
+              fullName: "",
+              email: "",
+              mobileNumber: "",
+              dateOfBirth: "",
+              gender: "",
+              profession: "",
+              password: "",
+              confirmPassword: "",
+              otp: "",
+              isOtpSent: false,
+              isOtpVerified: false,
+              formErrors: {},
+            })
+          }
+        >
           Clear Form
         </button>
       </form>
@@ -273,10 +319,4 @@ const Signup = () => {
   );
 };
 
-const SignupPage = () => (
-  <SignupProvider>
-    <Signup />
-  </SignupProvider>
-);
-
-export default SignupPage;
+export default Signup;
