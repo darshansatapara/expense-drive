@@ -85,6 +85,26 @@ const Signup = () => {
           ) {
             formData.append(key, state[key]);
           }
+        } // Convert the profile picture to binary
+        if (state.profilePicture) {
+          const reader = new FileReader();
+          reader.readAsArrayBuffer(state.profilePicture);
+          reader.onloadend = async () => {
+            const binary = reader.result;
+            formData.append("profilePictureBinary", new Blob([binary]));
+
+            // Send the form data with the binary image
+            const response = await client.post("/api/auth/signup", formData);
+            if (response.data.success) {
+              console.log("Signup successful");
+            }
+          };
+        } else {
+          // Send the form data without profile picture
+          const response = await client.post("/api/auth/signup", formData);
+          if (response.data.success) {
+            console.log("Signup successful");
+          }
         }
 
         const response = await client.post("/api/auth/signup", formData);
@@ -152,21 +172,7 @@ const Signup = () => {
             required
           />
         </div>
-        {state.isOtpSent && (
-          <div>
-            <label>Enter OTP</label>
-            <input
-              type="text"
-              name="otp"
-              value={state.otp}
-              onChange={handleChange}
-              required
-            />
-            <button type="button" onClick={handleVerifyOtp}>
-              Verify OTP
-            </button>
-          </div>
-        )}
+
         <div className="mobile-input">
           <label>Mobile Number</label>
           <PhoneInput
@@ -242,7 +248,9 @@ const Signup = () => {
             onChange={handleChange}
             required
           />
-          <div className="verify-otp">
+        </div>
+        <div className="verify-otp">
+          <div className="otp-input">
             <button
               type="button"
               onClick={handleSendOtp}
@@ -250,12 +258,21 @@ const Signup = () => {
             >
               Send OTP
             </button>
-            <div className="otp-input">
-              <input type="number" placeholder="Enter OTP" />
-              <button type="button" onClick={handleVerifyOtp}>
-                Verify
-              </button>
-            </div>
+            {state.isOtpSent && (
+              <div>
+                <label>Enter OTP</label>
+                <input
+                  type="text"
+                  name="otp"
+                  value={state.otp}
+                  onChange={handleChange}
+                  required
+                />
+                <button type="button" onClick={handleVerifyOtp}>
+                  Verify OTP
+                </button>
+              </div>
+            )}
           </div>
 
           {state.formErrors.confirmPassword && (

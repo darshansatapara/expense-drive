@@ -6,7 +6,7 @@
 body {
   background-color: #ffffff;
   margin: 0;
-  background-image  : linear-gradient(to right, rgb(195, 195, 196), rgb(216, 209, 211), rgb(82, 76, 82));
+  /* background-image  : linear-gradient(to right, rgb(195, 195, 196), rgb(216, 209, 211), rgb(82, 76, 82)); */
 
 
   /* font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif; */
@@ -20,7 +20,7 @@ body {
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   background-color: #acacac;
-  font-weight: 900;
+  /* font-weight: 900; */
 }
 
 .logo {
@@ -104,24 +104,21 @@ body {
 }
 
 .verify-otp {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: column ;
+  /* gap: 10px; */
 }
 
-.verify-otp button {
-  align-items: center;
-}
 
 .otp-input {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: center;
 }
 
-.otp-input input {
-  -moz-appearance: textfield;
-}
+  
 
 .otp-input input::-webkit-outer-spin-button,
 .otp-input input::-webkit-inner-spin-button {
