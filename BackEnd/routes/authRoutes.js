@@ -48,6 +48,7 @@ router.post("/send-otp", (req, res) => {
 
 // Verify OTP
 router.post("/verify-otp", (req, res) => {
+  console.log("verify call");
   const { email, otp } = req.body;
 
   // Retrieve OTP from storage

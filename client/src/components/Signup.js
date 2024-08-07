@@ -10,6 +10,23 @@ const validatePassword = (password) => {
   return passwordRegex.test(password);
 };
 
+const convertImageToBase64 = (imageFile) => {
+  return new Promise((resolve, reject) => {
+    if (!imageFile || !(imageFile instanceof Blob)) {
+      reject("No valid image selected.");
+    }
+
+    const reader = new FileReader();
+    reader.readAsDataURL(imageFile);
+    reader.onload = () => {
+      resolve(reader.result.split(",")[1]);
+    };
+    reader.onerror = (error) => {
+      reject("Error converting image to base64: " + error);
+    };
+  });
+};
+
 const Signup = () => {
   const [formData, setFormData] = useState({
     profilePicture: null,
@@ -30,25 +47,10 @@ const Signup = () => {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-
-    if (name === "profilePicture" && files && files.length > 0) {
-      const file = files[0];
-      convertImageToBase64(file)
-        .then((base64Image) => {
-          setFormData((prevFormData) => ({
-            ...prevFormData,
-            profilePicture: base64Image,
-          }));
-        })
-        .catch((error) => {
-          console.error("Error converting image: ", error);
-        });
-    } else {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        [name]: value,
-      }));
-    }
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: files ? files[0] : value,
+    }));
   };
 
   const handleMobileChange = (value) => {
@@ -81,6 +83,7 @@ const Signup = () => {
         otp: formData.otp,
       });
       if (response.data.success) {
+        console.log("verified");
         setFormData((prevFormData) => ({
           ...prevFormData,
           isOtpVerified: true,
@@ -109,10 +112,24 @@ const Signup = () => {
 
     if (Object.keys(formErrors).length === 0 && formData.isOtpVerified) {
       try {
-        const formPayload = {
-          ...formData,
-          profilePicture: formData.profilePicture, // Already in base64 format
-        };
+        if (formData.profilePicture) {
+          const imageBase64 = await convertImageToBase64(
+            formData.profilePicture
+          );
+          formData.profilePicture = imageBase64;
+        }
+
+        const formPayload = new FormData();
+        for (const key in formData) {
+          if (
+            formData[key] &&
+            key !== "formErrors" &&
+            key !== "isOtpSent" &&
+            key !== "isOtpVerified"
+          ) {
+            formPayload.append(key, formData[key]);
+          }
+        }
 
         const response = await client.post("/auth/signup", formPayload);
         if (response.data.success) {
@@ -124,198 +141,227 @@ const Signup = () => {
     }
   };
 
-  const convertImageToBase64 = (imageFile) => {
-    return new Promise((resolve, reject) => {
-      if (!imageFile || !(imageFile instanceof Blob)) {
-        reject("No valid image selected.");
-      }
-
-      const reader = new FileReader();
-      reader.readAsDataURL(imageFile);
-      reader.onload = () => {
-        resolve(reader.result.split(",")[1]);
-      };
-      reader.onerror = (error) => {
-        reject("Error converting image to base64: " + error);
-      };
-    });
-  };
-
   return (
-    <div className="signup-container">
-      <div className="logo">
-        M<span style={{ color: "black" }}>oney</span> E
-        <span style={{ color: "black" }}>xpense</span>
+    <div id="signup-container">
+      <div id="welcome-note">
+        <h2 id="welcome-title">Welcome to Money Expense!</h2>
+        <p id="welcome-text">Please fill out the form to sign up.</p>
       </div>
-      {formData.profilePicture && (
-        <div className="profile-preview">
-          <img
-            src={`data:image/jpeg;base64,${formData.profilePicture}`}
-            alt="Profile"
-            className="profile-image"
-          />
-        </div>
-      )}
-      <form className="signup-form" onSubmit={handleSubmit}>
-        <div>
-          <label>Profile Picture</label>
-          <input
-            type="file"
-            name="profilePicture"
-            accept="image/*"
-            onChange={handleChange}
-          />
-        </div>
-        <div>
-          <label>Username</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Full Name</label>
-          <input
-            type="text"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        {formData.isOtpSent && (
-          <div>
-            <label>Enter OTP</label>
+      <div id="form-container">
+        <form id="signup-form" onSubmit={handleSubmit}>
+          <div id="form-logo">
+            <span style={{ color: "black" }}>Money</span>
+            <span style={{ color: "black" }}> Expense</span>
+          </div>
+          <div id="profile-section">
+            {formData.profilePicture && (
+              <div id="profile-preview">
+                <img
+                  src={URL.createObjectURL(formData.profilePicture)}
+                  alt="Profile"
+                  id="profile-image"
+                />
+              </div>
+            )}
+            <label id="profile-picture-label">Profile Picture</label>
+            <input
+              type="file"
+              name="profilePicture"
+              accept="image/*"
+              id="profile-picture-input"
+              onChange={handleChange}
+            />
+          </div>
+          <div id="username-section">
+            <label id="username-label">Username</label>
             <input
               type="text"
-              name="otp"
-              value={formData.otp}
+              name="username"
+              id="username-input"
+              value={formData.username}
               onChange={handleChange}
               required
             />
-            <button type="button" onClick={handleVerifyOtp}>
-              Verify OTP
+          </div>
+          <div id="fullname-section">
+            <label id="fullname-label">Full Name</label>
+            <input
+              type="text"
+              name="fullName"
+              id="fullname-input"
+              value={formData.fullName}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div id="email-section">
+            <label id="email-label">Email</label>
+            <input
+              type="email"
+              name="email"
+              id="email-input"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div id="mobile-section">
+            <label id="mobile-label">Mobile Number</label>
+            <PhoneInput
+              className="phone-input"
+              country={"us"}
+              value={formData.mobileNumber}
+              onChange={handleMobileChange}
+              required
+            />
+          </div>
+          <div id="dob-section">
+            <label id="dob-label">Date of Birth</label>
+            <input
+              type="date"
+              name="dateOfBirth"
+              id="dob-input"
+              value={formData.dateOfBirth}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div id="gender-section">
+            <label id="gender-label">Gender</label>
+            <select
+              className="gender-dropdown"
+              name="gender"
+              id="gender-input"
+              value={formData.gender}
+              onChange={handleChange}
+              required
+            >
+              <option value="" disabled>
+                Select your gender
+              </option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div id="profession-section">
+            <label id="profession-label">Profession</label>
+            <select
+              name="profession"
+              id="profession-input"
+              value={formData.profession}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select Profession</option>
+              <option value="student">Student</option>
+              <option value="developer">Developer</option>
+              <option value="designer">Designer</option>
+              <option value="manager">Manager</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div id="password-section">
+            <label id="password-label">Password</label>
+            <input
+              type="password"
+              name="password"
+              id="password-input"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+            {formData.formErrors.password && (
+              <p className="error">{formData.formErrors.password}</p>
+            )}
+          </div>
+          <div id="confirm-password-section">
+            <label id="confirm-password-label">Confirm Password</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              id="confirm-password-input"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+            />
+            {formData.formErrors.confirmPassword && (
+              <p className="error">{formData.formErrors.confirmPassword}</p>
+            )}
+          </div>
+          <div id="otp-section" className="verify-otp">
+            <div className="otp-input">
+              <input
+                type="number"
+                name="otp"
+                id="otp-input"
+                value={formData.otp}
+                placeholder="Enter OTP"
+                onChange={handleChange}
+              />
+            </div>
+            <button
+              type="button"
+              id="send-otp-button"
+              onClick={handleSendOtp}
+              style={{
+                backgroundColor: formData.isOtpSent ? "grey" : "blue",
+                cursor: formData.isOtpSent ? "not-allowed" : "pointer",
+              }}
+              disabled={formData.isOtpSent}
+            >
+              {formData.isOtpSent ? "Resend OTP" : "Send OTP"}
+            </button>
+
+            <button
+              type="button"
+              id="verify-otp-button"
+              onClick={handleVerifyOtp}
+            >
+              Verify
             </button>
           </div>
-        )}
-        <div className="mobile-input">
-          <label>Mobile Number</label>
-          <PhoneInput
-            country={"us"}
-            value={formData.mobileNumber}
-            onChange={handleMobileChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Date of Birth</label>
-          <input
-            type="date"
-            name="dateOfBirth"
-            value={formData.dateOfBirth}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Gender</label>
-          <select
-            className="gender-dropdown"
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            required
-          >
-            <option value="" disabled>
-              Select your gender
-            </option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div>
-          <label>Profession</label>
-          <select
-            name="profession"
-            value={formData.profession}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Profession</option>
-            <option value="student">Student</option>
-            <option value="developer">Developer</option>
-            <option value="designer">Designer</option>
-            <option value="manager">Manager</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-          {formData.formErrors.password && (
-            <p className="error">{formData.formErrors.password}</p>
-          )}
-        </div>
-        <div>
-          <label>Confirm Password</label>
-          <input
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-          />
-          {formData.formErrors.confirmPassword && (
-            <p className="error">{formData.formErrors.confirmPassword}</p>
-          )}
-        </div>
-        <button type="submit" disabled={!formData.isOtpVerified}>
-          Sign Up
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            setFormData({
-              profilePicture: null,
-              username: "",
-              fullName: "",
-              email: "",
-              mobileNumber: "",
-              dateOfBirth: "",
-              gender: "",
-              profession: "",
-              password: "",
-              confirmPassword: "",
-              otp: "",
-              isOtpSent: false,
-              isOtpVerified: false,
-              formErrors: {},
-            })
-          }
-        >
-          Clear Form
-        </button>
-      </form>
+          <div id="button-row" className="button-row">
+            <button
+              type="button"
+              id="clear-button"
+              className="clear-button"
+              onClick={() =>
+                setFormData({
+                  profilePicture: null,
+                  username: "",
+                  fullName: "",
+                  email: "",
+                  mobileNumber: "",
+                  dateOfBirth: "",
+                  gender: "",
+                  profession: "",
+                  password: "",
+                  confirmPassword: "",
+                  otp: "",
+                  isOtpSent: false,
+                  isOtpVerified: false,
+                  formErrors: {},
+                })
+              }
+            >
+              Clear Form
+            </button>
+            <button
+              type="submit"
+              id="signup-button"
+              className="signup-button"
+              disabled={!formData.isOtpVerified}
+              style={{
+                backgroundColor: formData.isOtpVerified ? "green" : "red",
+                cursor: formData.isOtpVerified ? "pointer" : "not-allowed",
+              }}
+            >
+              Sign Up
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
